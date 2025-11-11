@@ -1,0 +1,55 @@
+# Virtual environment
+.venv
+venv
+ENV
+env
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.hypothesis
+
+# Linting and type checking
+.ruff_cache
+.mypy_cache
+.pytype
+.pyright
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# CI/CD
+.github
+
+# Documentation
+docs/
+*.md
+
+# Development
+.devcontainer
+docker-compose.yaml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
