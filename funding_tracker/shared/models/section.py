@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 
 class Section(NameModel, table=True):
-    """Exchange or trading section (e.g., binance, bybit)."""
-
     special_fields: dict[str, Any] = Field(
         default_factory=dict, sa_column=Column(JSON, server_default="{}")
     )

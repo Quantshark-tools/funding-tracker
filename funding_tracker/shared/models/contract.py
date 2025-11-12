@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 
 
 class Contract(UUIDModel, table=True):
-    """Perpetual futures contract."""
-
     asset_name: str = Field(foreign_key="asset.name")
     section_name: str = Field(foreign_key="section.name")
     funding_interval: int

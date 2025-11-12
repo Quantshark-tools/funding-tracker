@@ -9,8 +9,6 @@ if TYPE_CHECKING:
 
 
 class Asset(NameModel, table=True):
-    """Cryptocurrency asset (e.g., BTC, ETH)."""
-
     market_cap_rank: int | None = Field(default=None, index=True)
 
     contracts: list["Contract"] = Relationship(

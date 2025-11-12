@@ -4,8 +4,6 @@ from funding_tracker.shared.models.base import BaseFundingPoint
 
 
 class LiveFundingPoint(BaseFundingPoint, table=True):
-    """Live unsettled funding rate data point."""
-
     __tablename__: str = "unsettled_funding_rate_record"
 
     __table_args__ = (

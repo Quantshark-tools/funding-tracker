@@ -4,8 +4,6 @@ from funding_tracker.shared.models.base import BaseFundingPoint
 
 
 class HistoricalFundingPoint(BaseFundingPoint, table=True):
-    """Historical settled funding rate data point."""
-
     __tablename__: str = "funding_rate_record"
 
     __table_args__ = (

@@ -6,8 +6,6 @@ from sqlmodel import Field, SQLModel
 
 
 class UUIDModel(SQLModel, table=False):
-    """Base model for entities with UUID primary key."""
-
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         primary_key=True,
@@ -18,8 +16,6 @@ class UUIDModel(SQLModel, table=False):
 
 
 class NameModel(SQLModel, table=False):
-    """Base model for entities with string name as primary key."""
-
     name: str = Field(primary_key=True, index=True, unique=True)
 
     def __hash__(self) -> int:
@@ -27,11 +23,9 @@ class NameModel(SQLModel, table=False):
 
 
 class BaseFundingPoint(SQLModel, table=False):
-    """Base model for funding rate data points."""
-
     timestamp: datetime.datetime
     contract_id: uuid.UUID = Field(foreign_key="contract.id")
-    funding_rate: float
+    funding_rate: float  # Decimal format: 0.0001 = 0.01%
 
     def __hash__(self) -> int:
         return hash((self.contract_id, self.timestamp))
