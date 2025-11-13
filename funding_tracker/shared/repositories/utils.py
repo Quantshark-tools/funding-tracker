@@ -1,7 +1,7 @@
 """Utility functions for repository operations."""
 
 from collections.abc import Iterable, Sequence
-from typing import Literal, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
 from uuid import UUID
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -17,7 +17,7 @@ M = TypeVar("M", bound=SQLModel)
 class SQLModelWithTable(SQLModel):
     """Protocol for SQLModel instances that have a __table__ attribute."""
 
-    __table__: any
+    __table__: Any
 
 
 async def bulk_insert(
@@ -95,7 +95,7 @@ async def get_by_uuid(
     Returns:
         Model instance or None if not found
     """
-    stmt = select(model).where(model.id == id)
+    stmt = select(model).where(model.id == id)  # type: ignore[arg-type]
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -115,7 +115,7 @@ async def get_by_uuids(
     Returns:
         Sequence of model instances
     """
-    stmt = select(model).where(model.id.in_(ids))
+    stmt = select(model).where(model.id.in_(ids))  # type: ignore[arg-type]
     result = await session.execute(stmt)
     return result.scalars().all()
 
@@ -135,7 +135,7 @@ async def get_by_name(
     Returns:
         Model instance or None if not found
     """
-    stmt = select(model).where(model.name == name)
+    stmt = select(model).where(model.name == name)  # type: ignore[arg-type]
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -155,16 +155,16 @@ async def get_by_names(
     Returns:
         Sequence of model instances
     """
-    stmt = select(model).where(model.name.in_(names))
+    stmt = select(model).where(model.name.in_(names))  # type: ignore[arg-type]
     result = await session.execute(stmt)
     return result.scalars().all()
 
 
-async def get_last_record(
+async def get_last_record[T: SQLModel](
     session: AsyncSession,
-    model: type[M],
+    model: type[T],
     timestamp_column: str = "timestamp",
-) -> M | None:
+) -> T | None:
     """Get the most recent record ordered by timestamp.
 
     Args:
@@ -180,11 +180,11 @@ async def get_last_record(
     return result.scalar_one_or_none()
 
 
-async def get_first_record(
+async def get_first_record[T: SQLModel](
     session: AsyncSession,
-    model: type[M],
+    model: type[T],
     timestamp_column: str = "timestamp",
-) -> M | None:
+) -> T | None:
     """Get the oldest record ordered by timestamp.
 
     Args:

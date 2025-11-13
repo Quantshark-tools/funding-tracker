@@ -13,6 +13,9 @@ from tenacity import (
 
 logger = logging.getLogger(__name__)
 
+# JSON can be any of these types
+JsonValue = dict[str, Any] | list[Any] | str | int | float | bool | None
+
 # Retry on errors: stop after 60s, exponential backoff (max 10s)
 RETRY_CONFIG = {
     "retry": retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
@@ -28,7 +31,7 @@ async def get(
     params: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float = 30.0,
-) -> dict[str, Any]:
+) -> JsonValue:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.get(url, params=params, headers=headers)
         response.raise_for_status()
@@ -41,7 +44,7 @@ async def post(
     json: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
     timeout: float = 30.0,
-) -> dict[str, Any]:
+) -> JsonValue:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(url, json=json, headers=headers)
         response.raise_for_status()

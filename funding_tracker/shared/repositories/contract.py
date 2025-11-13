@@ -11,15 +11,15 @@ class ContractRepository(Repository[Contract]):
     _model = Contract
 
     async def get_by_section(self, section_name: str) -> Sequence[Contract]:
-        stmt = select(Contract).where(Contract.section_name == section_name)
+        stmt = select(Contract).where(Contract.section_name == section_name)  # type: ignore[arg-type]
         result = await self._session.execute(stmt)
         return result.scalars().all()
 
     async def get_active_by_section(self, section_name: str) -> Sequence[Contract]:
         """Returns non-deprecated contracts only."""
-        stmt = select(Contract).where(
-            Contract.section_name == section_name,
-            Contract.deprecated == False,  # noqa: E712
+        stmt = select(Contract).where(  # type: ignore[arg-type]
+            Contract.section_name == section_name,  # type: ignore[arg-type]
+            Contract.deprecated == False,  # type: ignore[arg-type]  # noqa: E712
         )
         result = await self._session.execute(stmt)
         return result.scalars().all()

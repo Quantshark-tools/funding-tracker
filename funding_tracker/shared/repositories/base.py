@@ -12,7 +12,7 @@ M = TypeVar("M", bound=SQLModel)
 class Repository[M]:
     _model: type[M]
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     async def add(self, record: M) -> M:
@@ -24,7 +24,7 @@ class Repository[M]:
         """Inserts records, ignoring conflicts."""
         await bulk_insert(
             self._session,
-            self._model,
-            records,
+            self._model,  # type: ignore[arg-type]
+            records,  # type: ignore[arg-type]
             on_conflict="ignore",
         )

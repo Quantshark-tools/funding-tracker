@@ -24,6 +24,9 @@ async def get_contracts() -> list[ContractInfo]:
         headers={"Content-Type": "application/json"},
     )
 
+    # Response is a dict with "universe" key
+    assert isinstance(response, dict)
+
     contracts = []
     for listing in response["universe"]:
         asset_name = listing["name"]
@@ -40,16 +43,13 @@ async def get_contracts() -> list[ContractInfo]:
     return contracts
 
 
-async def fetch_history(
-    symbol: str, after_timestamp: datetime | None
-) -> list[FundingPoint]:
+async def fetch_history(symbol: str, after_timestamp: datetime | None) -> list[FundingPoint]:
     # HyperLiquid uses milliseconds
     start_time_ms = int(after_timestamp.timestamp() * 1000) if after_timestamp else 0
     end_time_ms = int(datetime.now().timestamp() * 1000)
 
     logger.debug(
-        f"Fetching history for {EXCHANGE_ID}/{symbol} "
-        f"from {after_timestamp or 'beginning'} to now"
+        f"Fetching history for {EXCHANGE_ID}/{symbol} from {after_timestamp or 'beginning'} to now"
     )
 
     response = await http_client.post(
@@ -63,8 +63,10 @@ async def fetch_history(
         headers={"Content-Type": "application/json"},
     )
 
+    # Response is a list of funding history records
     points = []
     if response:
+        assert isinstance(response, list)
         for raw_record in response:
             rate = float(raw_record["fundingRate"])
             timestamp = datetime.fromtimestamp(raw_record["time"] / 1000.0)
@@ -84,6 +86,7 @@ async def fetch_live_batch() -> dict[str, FundingPoint]:
     )
 
     # Response: [meta, contexts] - parallel arrays
+    assert isinstance(response, list)
     meta_data = response[0]["universe"]
     asset_contexts = response[1]
 

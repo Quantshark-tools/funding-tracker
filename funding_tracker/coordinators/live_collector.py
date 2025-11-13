@@ -5,6 +5,7 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from funding_tracker.exchanges.dto import FundingPoint
 from funding_tracker.shared.models.contract import Contract
 from funding_tracker.shared.models.live_funding_point import LiveFundingPoint
 from funding_tracker.unit_of_work import UOWFactoryType
@@ -58,7 +59,9 @@ async def collect_live(
     else:
         logger.debug(f"Using individual API calls for {section_name}")
 
-        async def fetch_rate_for_contract(contract: Contract) -> tuple[Contract, object | None]:
+        async def fetch_rate_for_contract(
+            contract: Contract,
+        ) -> tuple[Contract, FundingPoint | None]:
             async with semaphore:
                 try:
                     symbol = assemble_symbol(contract.section_name, contract)
@@ -97,6 +100,5 @@ async def collect_live(
     success_count = len(live_records)
     failure_count = len(contracts) - success_count
     logger.info(
-        f"Live rate collection for {section_name}: "
-        f"{success_count} success, {failure_count} failed"
+        f"Live rate collection for {section_name}: {success_count} success, {failure_count} failed"
     )

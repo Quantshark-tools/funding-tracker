@@ -7,7 +7,7 @@ This module provides universal coordinators that work with any exchange adapter:
 - symbol_assembler: Convert Contract objects to exchange-specific symbols
 """
 
-from funding_tracker.coordinators.contract_syncer import sync_contracts
+from funding_tracker.coordinators.contract_registry import register_contracts
 from funding_tracker.coordinators.history_fetcher import sync_contract, update_contract
 from funding_tracker.coordinators.live_collector import collect_live
 from funding_tracker.coordinators.symbol_assembler import (
@@ -16,7 +16,7 @@ from funding_tracker.coordinators.symbol_assembler import (
 )
 
 __all__ = [
-    "sync_contracts",
+    "register_contracts",
     "sync_contract",
     "update_contract",
     "collect_live",

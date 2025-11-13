@@ -21,6 +21,11 @@ class NameModel(SQLModel, table=False):
     def __hash__(self) -> int:
         return hash(self.name)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NameModel):
+            return NotImplemented
+        return self.name == other.name
+
 
 class BaseFundingPoint(SQLModel, table=False):
     timestamp: datetime.datetime
@@ -29,3 +34,8 @@ class BaseFundingPoint(SQLModel, table=False):
 
     def __hash__(self) -> int:
         return hash((self.contract_id, self.timestamp))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BaseFundingPoint):
+            return NotImplemented
+        return self.contract_id == other.contract_id and self.timestamp == other.timestamp

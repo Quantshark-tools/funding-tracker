@@ -71,6 +71,7 @@ exclude = [
     "**/__pycache__",
     ".venv",
     "alembic",
+    "funding_tracker/exchanges/_template.py",
 ]
 typeCheckingMode = "basic"
 pythonVersion = "3.13"
