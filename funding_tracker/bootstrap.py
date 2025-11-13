@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 async def bootstrap(
-    exchanges: list[str],
     db_connection: str,
+    exchanges: list[str] | None = None,
     concurrency_limit: int = 10,
     mv_refresher_debounce: int = 10,
 ) -> AsyncIOScheduler:
@@ -38,8 +38,9 @@ async def bootstrap(
     - update_live(): Every minute (collect live funding rates, evenly distributed)
 
     Args:
-        exchanges: List of exchange identifiers (e.g., ["hyperliquid", "binance"])
         db_connection: Database connection string (PostgreSQL)
+        exchanges: List of exchange identifiers (e.g., ["hyperliquid", "binance"]).
+            If None, uses all registered exchanges (default: None)
         concurrency_limit: Max parallel tasks per exchange (default: 10)
         mv_refresher_debounce: Materialized view refresh debounce in seconds (default: 10)
 
@@ -51,15 +52,27 @@ async def bootstrap(
         DatabaseError: If database connection fails
 
     Example:
+        # Use all registered exchanges
         scheduler = await bootstrap(
-            exchanges=["hyperliquid"],
             db_connection="postgresql+asyncpg://user:pass@localhost/db"
         )
+
+        # Or specify specific exchanges
+        scheduler = await bootstrap(
+            db_connection="postgresql+asyncpg://user:pass@localhost/db",
+            exchanges=["hyperliquid"]
+        )
+
         scheduler.start()
         # Keep running...
         await asyncio.Event().wait()
     """
-    logger.info(f"Bootstrapping funding tracker for exchanges: {exchanges}")
+    # Use all registered exchanges if none specified
+    if exchanges is None:
+        exchanges = list(EXCHANGES.keys())
+        logger.info(f"No exchanges specified, using all registered: {exchanges}")
+    else:
+        logger.info(f"Bootstrapping funding tracker for exchanges: {exchanges}")
 
     # Initialize shared dependencies
     uow_factory = create_uow_factory(UnitOfWork, db_connection)
@@ -106,10 +119,12 @@ async def bootstrap(
         # Register update job: immediate on start + hourly at minute 0
         scheduler.add_job(
             orchestrator.update,
-            trigger=OrTrigger([
-                DateTrigger(),  # Run immediately on start
-                CronTrigger(hour="*", minute=0, second=5),  # Then hourly
-            ]),
+            trigger=OrTrigger(
+                [
+                    DateTrigger(),  # Run immediately on start
+                    CronTrigger(hour="*", minute=0, second=5),  # Then hourly
+                ]
+            ),
             name=f"{exchange_name}_update",
         )
         logger.info(f"Registered update job for {exchange_name} (immediate + hourly)")
@@ -122,8 +137,7 @@ async def bootstrap(
             name=f"{exchange_name}_live",
         )
         logger.info(
-            f"Registered live rate collection for {exchange_name} "
-            f"(every minute at :{second:02d})"
+            f"Registered live rate collection for {exchange_name} (every minute at :{second:02d})"
         )
 
     # Register materialized view refresher

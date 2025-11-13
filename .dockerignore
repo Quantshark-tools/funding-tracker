@@ -41,7 +41,8 @@ htmlcov
 
 # Documentation
 docs/
-*.md
+# Keep README.md as it's required for package metadata
+# *.md
 
 # Development
 .devcontainer

@@ -9,9 +9,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
-    ports:
-      - "5432:5432"
-
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
 
@@ -20,6 +17,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  funding-tracker:
+    build: .
+    container_name: funding-tracker-app
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
 
 volumes:
   timescaledb_data:
