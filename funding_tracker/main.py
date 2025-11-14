@@ -9,6 +9,7 @@ import asyncio
 import logging
 import sys
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from funding_tracker.bootstrap import bootstrap
@@ -22,6 +23,7 @@ logging.basicConfig(
 
 # Reduce noise from third-party libraries
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ class Settings(BaseSettings):
         extra="ignore",  # Ignore extra fields like TZ
     )
 
-    db_connection: str
+    db_connection: str = Field(alias="DB_CONNECTION")
 
 
 async def run_scheduler(db_connection: str) -> None:
@@ -51,7 +53,7 @@ async def run_scheduler(db_connection: str) -> None:
 def main() -> None:
     """Main entry point for funding tracker."""
     try:
-        settings = Settings()
+        settings = Settings()  # type: ignore[call-arg]
     except Exception as e:
         sys.exit(f"Configuration error: {e}")
 
