@@ -23,8 +23,7 @@ class ExchangeAdapter(Protocol):
 
     EXCHANGE_ID: str
 
-    async def get_contracts(self) -> list[ContractInfo]:
-        ...
+    async def get_contracts(self) -> list[ContractInfo]: ...
 
     async def fetch_history(
         self, symbol: str, after_timestamp: datetime | None
@@ -36,6 +35,6 @@ class ExchangeAdapter(Protocol):
         """[OPTIONAL - PREFERRED] Get all unsettled rates in one API call."""
         ...
 
-    async def fetch_live(self, symbol: str) -> FundingPoint | None:
+    async def fetch_live(self, symbol: str) -> FundingPoint:
         """[OPTIONAL - FALLBACK] Get unsettled rate for single symbol."""
         ...

@@ -35,6 +35,7 @@ class MaterializedViewRefresher:
                 self._last_signal_time = None
                 self._logger.info("Materialized views refresh completed")
             except Exception as e:
+                # NOTE: no error raising - this is optimisation, not critical functionality.
                 self._logger.error(
                     f"Failed to refresh materialized views: {e}",
                     exc_info=True,

@@ -5,7 +5,8 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from funding_tracker.exchanges.dto import FundingPoint
+from httpx import HTTPError
+
 from funding_tracker.shared.models.contract import Contract
 from funding_tracker.shared.models.live_funding_point import LiveFundingPoint
 from funding_tracker.unit_of_work import UOWFactoryType
@@ -38,56 +39,56 @@ async def collect_live(
 
     if hasattr(exchange_adapter, "fetch_live_batch"):
         logger.debug(f"Using batch API for {section_name}")
-        try:
-            all_rates = await exchange_adapter.fetch_live_batch()
-            results = []
-            for contract in contracts:
-                symbol = assemble_symbol(contract.section_name, contract)
-                rate = all_rates.get(symbol)
-                if rate is None:
-                    logger.warning(
-                        f"No live rate returned for {contract.asset.name} "
-                        f"on {section_name} (symbol: {symbol})"
+        all_rates = await exchange_adapter.fetch_live_batch()
+        live_records = []
+        for contract in contracts:
+            symbol = assemble_symbol(contract.section_name, contract)
+            rate = all_rates.get(symbol)
+            if rate is None:
+                logger.warning(
+                    f"No live rate returned for {contract.asset.name} "
+                    f"on {section_name} (symbol: {symbol})"
+                )
+            else:
+                live_records.append(
+                    LiveFundingPoint(
+                        contract_id=contract.id,
+                        timestamp=rate.timestamp,
+                        funding_rate=rate.rate,
                     )
-                results.append((contract, rate))
-        except Exception as e:
-            logger.error(
-                f"Failed to fetch batch live rates for {section_name}: {e}",
-                exc_info=True,
-            )
-            results = [(contract, None) for contract in contracts]
+                )
+
     else:
         logger.debug(f"Using individual API calls for {section_name}")
 
         async def fetch_rate_for_contract(
             contract: Contract,
-        ) -> tuple[Contract, FundingPoint | None]:
+        ) -> LiveFundingPoint | None:
             async with semaphore:
                 try:
                     symbol = assemble_symbol(contract.section_name, contract)
                     rate = await exchange_adapter.fetch_live(symbol)
-                    return (contract, rate)
-                except Exception as e:
-                    logger.error(
-                        f"Failed to fetch live rate for {contract.asset.name} "
-                        f"on {section_name}: {e}",
-                        exc_info=True,
+                    return LiveFundingPoint(
+                        contract_id=contract.id,
+                        timestamp=rate.timestamp,
+                        funding_rate=rate.rate,
                     )
-                    return (contract, None)
+                except HTTPError as e:
+                    logger.warning(
+                        f"Failed to fetch live rate for {contract.asset.name} "
+                        f"on {section_name}: {e}"
+                    )
+                    return None
+                except ValueError as e:
+                    logger.warning(
+                        f"Invalid funding rate data for {contract.asset.name} "
+                        f"on {section_name}: {e}"
+                    )
+                    return None
 
         tasks = [fetch_rate_for_contract(contract) for contract in contracts]
         results = await asyncio.gather(*tasks)
-
-    live_records = []
-    for contract, rate in results:
-        if rate is not None:
-            live_records.append(
-                LiveFundingPoint(
-                    contract_id=contract.id,
-                    timestamp=rate.timestamp,
-                    funding_rate=rate.rate,
-                )
-            )
+        live_records = [r for r in results if r is not None]
 
     if not live_records:
         logger.warning(f"No live rates collected for {section_name}")
@@ -95,7 +96,6 @@ async def collect_live(
 
     async with uow_factory() as uow:
         await uow.live_funding_records.bulk_insert_ignore(live_records)
-        await uow.commit()
 
     success_count = len(live_records)
     failure_count = len(contracts) - success_count

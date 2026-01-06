@@ -34,6 +34,7 @@ API_ENDPOINT = "TODO_API_ENDPOINT"  # Example: "https://api.binance.com"
 # STEP 2: Implement get_contracts()
 # =============================================================================
 
+
 async def get_contracts() -> list[ContractInfo]:
     # TODO: Implementation steps:
     # 1. Find your exchange's API documentation for listing perpetual contracts
@@ -91,9 +92,8 @@ async def get_contracts() -> list[ContractInfo]:
 # STEP 3: Implement fetch_history()
 # =============================================================================
 
-async def fetch_history(
-    symbol: str, after_timestamp: datetime | None
-) -> list[FundingPoint]:
+
+async def fetch_history(symbol: str, after_timestamp: datetime | None) -> list[FundingPoint]:
     # TODO: Implementation steps:
     # 1. Find your exchange's API documentation for historical funding rates
     # 2. Determine how to specify the symbol parameter
@@ -130,8 +130,7 @@ async def fetch_history(
     # Tip: Use utils.to_ms_timestamp() and utils.from_ms_timestamp() helpers!
 
     logger.debug(
-        f"Fetching history for {EXCHANGE_ID}/{symbol} "
-        f"from {after_timestamp or 'beginning'} to now"
+        f"Fetching history for {EXCHANGE_ID}/{symbol} from {after_timestamp or 'beginning'} to now"
     )
 
     # TODO: Convert timestamp to exchange format
@@ -188,6 +187,7 @@ async def fetch_history(
 #
 # Examples: HyperLiquid, Bybit, OKX have batch endpoints
 # -----------------------------------------------------------------------------
+
 
 async def fetch_live_batch() -> dict[str, FundingPoint]:
     # TODO: Implementation steps:
@@ -251,19 +251,19 @@ async def fetch_live_batch() -> dict[str, FundingPoint]:
 # The coordinator will automatically detect and use the batch method.
 # -----------------------------------------------------------------------------
 
-# async def fetch_live(symbol: str) -> FundingPoint | None:
+# async def fetch_live(symbol: str) -> FundingPoint:
 #     # TODO: Implementation steps:
 #     # 1. Find your exchange's API endpoint for single symbol ticker/funding
 #     # 2. Call the API using http_client.get() or http_client.post()
 #     # 3. Parse the response JSON
-#     # 4. Return FundingPoint or None if not available
+#     # 4. Return FundingPoint or raise exception if not available
 #     #
 #     # Example (hypothetical individual API):
 #     #   response = await http_client.get(
 #     #       f"{API_ENDPOINT}/v1/ticker/{symbol}",
 #     #   )
 #     #   if "fundingRate" not in response:
-#     #       return None
+#     #       raise ValueError(f"No funding rate in response for {symbol}")
 #     #   return FundingPoint(
 #     #       rate=float(response["fundingRate"]),
 #     #       timestamp=datetime.now(),
@@ -278,7 +278,7 @@ async def fetch_live_batch() -> dict[str, FundingPoint]:
 #
 #     # TODO: Parse response
 #     if "TODO_RATE_FIELD" not in response:
-#         return None
+#         raise ValueError(f"No funding rate in response for {symbol}")
 #
 #     return FundingPoint(
 #         rate=float(response["TODO_RATE_FIELD"]),
