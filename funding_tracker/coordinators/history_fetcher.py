@@ -23,8 +23,8 @@ async def sync_contract(
 ) -> int:
     """Fetch backwards until no more data; marks contract as synced.
 
-    Returns:
-        Number of new points fetched (0 if skipped).
+    Opens/closes session for each DB operation to avoid holding sessions open
+    during long API calls.
     """
     if contract.synced:
         logger.debug(
@@ -38,20 +38,33 @@ async def sync_contract(
     )
 
     symbol = assemble_symbol(contract.section_name, contract)
+    total_points = 0
+    batch_count = 0
 
-    async with uow_factory() as uow:
-        oldest = await uow.historical_funding_records.get_oldest_for_contract(contract.id)
-        before_timestamp = oldest.timestamp if oldest else None
+    while True:
+        batch_count += 1
 
-        logger.debug(f"Fetching history for {symbol} before {before_timestamp or 'beginning'}")
+        async with uow_factory() as uow:
+            oldest = await uow.historical_funding_records.get_oldest_for_contract(contract.id)
+            before_timestamp = oldest.timestamp if oldest else None
 
-        points = await exchange_adapter.fetch_history(symbol, before_timestamp)
+        logger.debug(
+            f"Sync batch #{batch_count} for {symbol}: fetching before {
+                before_timestamp or 'beginning'
+            }"
+        )
+
+        points = await exchange_adapter.fetch_history_before(symbol, before_timestamp)
 
         if not points:
-            contract.synced = True
-            logger.debug(f"No more history for {symbol}, marking as synced")
-            await uow.commit()
-            return 0
+            async with uow_factory() as uow:
+                contract.synced = True
+                await uow.commit()
+            logger.debug(
+                f"No more history for {symbol}, marking as synced "
+                f"(total batches: {batch_count}, total points: {total_points})"
+            )
+            break
 
         funding_records = [
             HistoricalFundingPoint(
@@ -62,16 +75,20 @@ async def sync_contract(
             for point in points
         ]
 
-        await uow.historical_funding_records.bulk_insert_ignore(funding_records)
+        async with uow_factory() as uow:
+            await uow.historical_funding_records.bulk_insert_ignore(funding_records)
+            await uow.commit()
 
-        await uow.commit()
+        batch_points = len(points)
+        total_points += batch_points
 
         logger.debug(
-            f"Synced {len(points)} funding points for {symbol} "
-            f"(oldest: {min(p.timestamp for p in points)})"
+            f"Sync batch #{batch_count} for {symbol}: {batch_points} points "
+            f"(oldest: {min(p.timestamp for p in points)}, "
+            f"newest: {max(p.timestamp for p in points)})"
         )
 
-        return len(points)
+    return total_points
 
 
 async def update_contract(
@@ -80,11 +97,7 @@ async def update_contract(
     uow_factory: UOWFactoryType,
     assemble_symbol: Callable[[str, Contract], str],
 ) -> int:
-    """Fetch new data after latest point; skips if interval not elapsed.
-
-    Returns:
-        Number of new points fetched (0 if skipped).
-    """
+    """Fetch new data after latest point; skips if interval not elapsed."""
     logger.debug(
         f"Checking update for {contract.asset.name}/{contract.quote_name} "
         f"on {contract.section_name}"
@@ -112,7 +125,7 @@ async def update_contract(
 
         logger.debug(f"Fetching history for {symbol} after {newest.timestamp}")
 
-        points = await exchange_adapter.fetch_history(symbol, newest.timestamp)
+        points = await exchange_adapter.fetch_history_after(symbol, newest.timestamp)
 
         if not points:
             logger.debug(f"No new funding points for {symbol}")
@@ -128,8 +141,6 @@ async def update_contract(
         ]
 
         await uow.historical_funding_records.bulk_insert_ignore(funding_records)
-
-        await uow.commit()
 
         logger.debug(
             f"Updated {len(points)} funding points for {symbol} "

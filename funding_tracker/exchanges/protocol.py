@@ -1,7 +1,6 @@
 """Exchange adapter protocol.
 
-Structural interface for exchange modules. Adapters implement required methods
-without explicit inheritance. See exchanges/README.md for integration guide.
+Adapters implement required methods without explicit inheritance.
 """
 
 from datetime import datetime
@@ -16,25 +15,36 @@ class ExchangeAdapter(Protocol):
 
     Adapters are modules (not classes) implementing this interface.
     LiveCollector detects available methods via hasattr().
-
-    Required: EXCHANGE_ID, get_contracts(), fetch_history()
-    Optional: fetch_live_batch() [preferred] OR fetch_live()
     """
 
     EXCHANGE_ID: str
 
     async def get_contracts(self) -> list[ContractInfo]: ...
 
-    async def fetch_history(
-        self, symbol: str, after_timestamp: datetime | None
+    async def fetch_history_before(
+        self, symbol: str, before_timestamp: datetime | None
     ) -> list[FundingPoint]:
-        """Returns funding points after timestamp; may contain duplicates."""
+        """Fetch funding points before timestamp (backward fetching).
+
+        Returns points in chronological order (oldest first).
+        May contain duplicates across calls - caller should handle deduplication.
+        """
+        ...
+
+    async def fetch_history_after(
+        self, symbol: str, after_timestamp: datetime
+    ) -> list[FundingPoint]:
+        """Fetch funding points after timestamp (forward fetching).
+
+        Returns points in chronological order (oldest first).
+        May contain duplicates across calls - caller should handle deduplication.
+        """
         ...
 
     async def fetch_live_batch(self) -> dict[str, FundingPoint]:
-        """[OPTIONAL - PREFERRED] Get all unsettled rates in one API call."""
+        """[PREFERRED] Get all unsettled rates in one API call."""
         ...
 
     async def fetch_live(self, symbol: str) -> FundingPoint:
-        """[OPTIONAL - FALLBACK] Get unsettled rate for single symbol."""
+        """[FALLBACK] Get unsettled rate for single symbol."""
         ...

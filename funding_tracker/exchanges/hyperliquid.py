@@ -1,8 +1,3 @@
-"""HyperLiquid exchange adapter.
-
-API docs: https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api
-"""
-
 import logging
 from datetime import datetime
 
@@ -14,6 +9,11 @@ logger = logging.getLogger(__name__)
 EXCHANGE_ID = "hyperliquid"
 API_ENDPOINT = "https://api.hyperliquid.xyz/info"
 
+# HyperLiquid API returns max 500 records per request
+# Funding interval is 1 hour, so 500 records = 500 hours
+# Use 498 hours (500 - 2) as safety buffer
+_MAX_FETCH_WINDOW_HOURS = 498
+
 
 async def get_contracts() -> list[ContractInfo]:
     logger.debug(f"Fetching contracts from {EXCHANGE_ID}")
@@ -24,7 +24,6 @@ async def get_contracts() -> list[ContractInfo]:
         headers={"Content-Type": "application/json"},
     )
 
-    # Response is a dict with "universe" key
     assert isinstance(response, dict)
 
     contracts = []
@@ -43,13 +42,11 @@ async def get_contracts() -> list[ContractInfo]:
     return contracts
 
 
-async def fetch_history(symbol: str, after_timestamp: datetime | None) -> list[FundingPoint]:
-    # HyperLiquid uses milliseconds
-    start_time_ms = int(after_timestamp.timestamp() * 1000) if after_timestamp else 0
-    end_time_ms = int(datetime.now().timestamp() * 1000)
-
+async def _fetch_history(symbol: str, start_time_ms: int, end_time_ms: int) -> list[FundingPoint]:
     logger.debug(
-        f"Fetching history for {EXCHANGE_ID}/{symbol} from {after_timestamp or 'beginning'} to now"
+        f"Fetching history for {EXCHANGE_ID}/{symbol} "
+        f"from {datetime.fromtimestamp(start_time_ms / 1000)} "
+        f"to {datetime.fromtimestamp(end_time_ms / 1000)}"
     )
 
     response = await http_client.post(
@@ -63,7 +60,6 @@ async def fetch_history(symbol: str, after_timestamp: datetime | None) -> list[F
         headers={"Content-Type": "application/json"},
     )
 
-    # Response is a list of funding history records
     points = []
     if response:
         assert isinstance(response, list)
@@ -76,6 +72,30 @@ async def fetch_history(symbol: str, after_timestamp: datetime | None) -> list[F
     return points
 
 
+async def fetch_history_before(
+    symbol: str, before_timestamp: datetime | None
+) -> list[FundingPoint]:
+    end_time_ms = int(
+        (before_timestamp.timestamp() if before_timestamp else datetime.now().timestamp()) * 1000
+    )
+    start_time_ms = end_time_ms - (_MAX_FETCH_WINDOW_HOURS * 60 * 60 * 1000)
+
+    logger.debug(
+        f"Fetching backward history for {EXCHANGE_ID}/{symbol} before {before_timestamp or 'now'}"
+    )
+
+    return await _fetch_history(symbol, start_time_ms, end_time_ms)
+
+
+async def fetch_history_after(symbol: str, after_timestamp: datetime) -> list[FundingPoint]:
+    start_time_ms = int(after_timestamp.timestamp() * 1000)
+    end_time_ms = int(datetime.now().timestamp() * 1000)
+
+    logger.debug(f"Fetching forward history for {EXCHANGE_ID}/{symbol} after {after_timestamp}")
+
+    return await _fetch_history(symbol, start_time_ms, end_time_ms)
+
+
 async def fetch_live_batch() -> dict[str, FundingPoint]:
     logger.debug(f"Fetching live rates batch from {EXCHANGE_ID}")
 
@@ -85,7 +105,6 @@ async def fetch_live_batch() -> dict[str, FundingPoint]:
         headers={"Content-Type": "application/json"},
     )
 
-    # Response: [meta, contexts] - parallel arrays
     assert isinstance(response, list)
     meta_data = response[0]["universe"]
     asset_contexts = response[1]
