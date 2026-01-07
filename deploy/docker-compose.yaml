@@ -19,7 +19,10 @@ services:
       retries: 5
 
   funding-tracker:
-    build: .
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
     container_name: funding-tracker-app
     restart: unless-stopped
     depends_on:
@@ -28,7 +31,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs:/app/logs
+      - ./entrypoint.sh:/entrypoint.sh:ro
 
 volumes:
   timescaledb_data:

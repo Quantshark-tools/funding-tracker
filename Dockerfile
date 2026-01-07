@@ -17,8 +17,4 @@ RUN uv sync --frozen --no-dev
 # Add venv to PATH so we can call scripts directly
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy and set entrypoint
-COPY entrypoint.sh /
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["funding-tracker"]
