@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Log progress every N batches during sync operations
+PROGRESS_LOG_BATCH_INTERVAL = 10
+
 
 async def sync_contract(
     exchange_adapter: "ExchangeAdapter",
@@ -89,6 +92,16 @@ async def sync_contract(
             f"(oldest: {min(p.timestamp for p in points)}, "
             f"newest: {max(p.timestamp for p in points)})"
         )
+
+        # Log progress periodically
+        if batch_count % PROGRESS_LOG_BATCH_INTERVAL == 0:
+            logger.info(
+                f"Sync progress for {symbol}: batch #{batch_count}, "
+                f"{total_points} total points fetched, "
+                f"latest batch range: {min(p.timestamp for p in points)} to {
+                    max(p.timestamp for p in points)
+                }"
+            )
 
     return total_points
 
