@@ -62,7 +62,7 @@ async def sync_contract(
                 merged_contract = await uow.merge(contract)
                 merged_contract.synced = True
                 await uow.commit()
-            logger.debug(
+            logger.info(
                 f"No more history for {symbol}, marking as synced "
                 f"(total batches: {batch_count}, total points: {total_points})"
             )
