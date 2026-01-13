@@ -5,7 +5,14 @@ Each exchange is a class implementing BaseExchange ABC.
 
 import logging
 
-from funding_tracker.exchanges import backpack, binance_coinm, binance_usdm, bybit, hyperliquid
+from funding_tracker.exchanges import (
+    backpack,
+    binance_coinm,
+    binance_usdm,
+    bybit,
+    derive,
+    hyperliquid,
+)
 from funding_tracker.exchanges.base import BaseExchange
 
 logger = logging.getLogger(__name__)
@@ -36,6 +43,7 @@ def _build_registry() -> dict[str, BaseExchange]:
         "binance_usd-m": binance_usdm.BinanceUsdmExchange,
         "binance_coin-m": binance_coinm.BinanceCoinmExchange,
         "backpack": backpack.BackpackExchange,
+        "derive": derive.DeriveExchange,
     }
 
     registry = {}
