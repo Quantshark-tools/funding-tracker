@@ -13,6 +13,7 @@ from funding_tracker.exchanges import (
     derive,
     dydx,
     hyperliquid,
+    kucoin,
 )
 from funding_tracker.exchanges.base import BaseExchange
 
@@ -46,6 +47,7 @@ def _build_registry() -> dict[str, BaseExchange]:
         "backpack": backpack.BackpackExchange,
         "derive": derive.DeriveExchange,
         "dydx": dydx.DydxExchange,
+        "kucoin": kucoin.KucoinExchange,
     }
 
     registry = {}

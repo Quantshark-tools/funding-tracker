@@ -1,0 +1,146 @@
+"""KuCoin exchange adapter.
+
+KuCoin has mixed funding intervals (1h, 4h, 8h). Minimum is 1 hour.
+_FETCH_STEP = 100 hours (empirically tested).
+"""
+
+import logging
+from datetime import datetime
+
+from funding_tracker.exchanges.base import BaseExchange
+from funding_tracker.exchanges.dto import ContractInfo, FundingPoint
+from funding_tracker.infrastructure import http_client
+from funding_tracker.shared.models.contract import Contract
+
+logger = logging.getLogger(__name__)
+
+
+class KucoinExchange(BaseExchange):
+    """KuCoin exchange adapter."""
+
+    EXCHANGE_ID = "kucoin"
+    API_ENDPOINT = "https://api-futures.kucoin.com"
+
+    # Empirically tested
+    _FETCH_STEP = 100
+
+    def _format_symbol(self, contract: Contract) -> str:
+        return f"{contract.asset.name}{contract.quote_name}M"
+
+    async def get_contracts(self) -> list[ContractInfo]:
+        logger.debug(f"Fetching contracts from {self.EXCHANGE_ID}")
+
+        response = await http_client.get(f"{self.API_ENDPOINT}/api/v1/contracts/active")
+
+        assert isinstance(response, dict)
+
+        if response.get("code") != "200000":
+            raise RuntimeError(f"KuCoin API error: {response}")
+
+        contracts = []
+        raw_contracts = response.get("data", [])
+
+        for contract in raw_contracts:
+            if contract["status"] != "Open":
+                continue
+
+            # Skip non-perpetual contracts (quarterly futures have fundingRateGranularity = None)
+            funding_interval_ms = contract.get("fundingRateGranularity")
+            if not funding_interval_ms:
+                continue
+
+            asset_name = contract["baseCurrency"]
+            quote = contract["quoteCurrency"]
+            funding_interval = int(funding_interval_ms / 1000 / 3600)
+
+            contracts.append(
+                ContractInfo(
+                    asset_name=asset_name,
+                    quote=quote,
+                    funding_interval=funding_interval,
+                    section_name=self.EXCHANGE_ID,
+                )
+            )
+
+        logger.debug(f"Fetched {len(contracts)} contracts from {self.EXCHANGE_ID}")
+        return contracts
+
+    async def _fetch_history(
+        self, contract: Contract, start_ms: int, end_ms: int
+    ) -> list[FundingPoint]:
+        symbol = self._format_symbol(contract)
+
+        logger.debug(
+            f"Fetching history for {self.EXCHANGE_ID}/{symbol} "
+            f"from {datetime.fromtimestamp(start_ms / 1000)} "
+            f"to {datetime.fromtimestamp(end_ms / 1000)}"
+        )
+
+        response = await http_client.get(
+            f"{self.API_ENDPOINT}/api/v1/contract/funding-rates",
+            params={
+                "symbol": symbol,
+                "from": start_ms,
+                "to": end_ms,
+            },
+        )
+
+        assert isinstance(response, dict)
+
+        if response.get("code") != "200000":
+            raise RuntimeError(f"KuCoin API error for {symbol}: {response}")
+
+        points = []
+        raw_records = response.get("data", [])
+
+        for raw_record in raw_records:
+            rate = float(raw_record["fundingRate"])
+            timestamp = datetime.fromtimestamp(int(raw_record["timepoint"]) / 1000.0)
+            points.append(FundingPoint(rate=rate, timestamp=timestamp))
+
+        logger.debug(f"Fetched {len(points)} funding points for {self.EXCHANGE_ID}/{symbol}")
+        return points
+
+    async def _fetch_all_rates(self) -> dict[str, FundingPoint]:
+        logger.debug(f"Fetching live rates batch from {self.EXCHANGE_ID}")
+
+        response = await http_client.get(f"{self.API_ENDPOINT}/api/v1/contracts/active")
+
+        assert isinstance(response, dict)
+
+        if response.get("code") != "200000":
+            raise RuntimeError(f"KuCoin API error: {response}")
+
+        now = datetime.now()
+        rates = {}
+        raw_contracts = response.get("data", [])
+
+        for contract in raw_contracts:
+            if contract["status"] != "Open":
+                continue
+
+            funding_interval_ms = contract.get("fundingRateGranularity")
+            if not funding_interval_ms:
+                continue
+
+            symbol = contract["symbol"]
+            funding_fee_rate = contract.get("fundingFeeRate")
+
+            if funding_fee_rate is not None:
+                rates[symbol] = FundingPoint(
+                    rate=float(funding_fee_rate),
+                    timestamp=now,
+                )
+
+        logger.debug(f"Fetched {len(rates)} live rates from {self.EXCHANGE_ID}")
+        return rates
+
+    async def fetch_live(self, contracts: list[Contract]) -> dict[Contract, FundingPoint]:
+        symbol_to_contract = {self._format_symbol(c): c for c in contracts}
+        all_rates = await self._fetch_all_rates()
+
+        return {
+            symbol_to_contract[symbol]: rate
+            for symbol, rate in all_rates.items()
+            if symbol in symbol_to_contract
+        }
