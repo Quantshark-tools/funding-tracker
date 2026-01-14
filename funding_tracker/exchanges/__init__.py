@@ -17,6 +17,7 @@ from funding_tracker.exchanges import (
     lighter,
     okx,
     pacifica,
+    paradex,
 )
 from funding_tracker.exchanges.base import BaseExchange
 
@@ -54,6 +55,7 @@ def _build_registry() -> dict[str, BaseExchange]:
         "lighter": lighter.LighterExchange,
         "okx": okx.OkxExchange,
         "pacifica": pacifica.PacificaExchange,
+        "paradex": paradex.ParadexExchange,
     }
 
     registry = {}
