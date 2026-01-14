@@ -6,6 +6,7 @@ Each exchange is a class implementing BaseExchange ABC.
 import logging
 
 from funding_tracker.exchanges import (
+    aster,
     backpack,
     binance_coinm,
     binance_usdm,
@@ -45,6 +46,7 @@ def _validate_exchange(exchange_class: type[BaseExchange], name: str) -> None:
 def _build_registry() -> dict[str, BaseExchange]:
     """Build EXCHANGES registry with validation and instantiation."""
     exchange_classes: dict[str, type[BaseExchange]] = {
+        "aster": aster.AsterExchange,
         "backpack": backpack.BackpackExchange,
         "binance_usd-m": binance_usdm.BinanceUsdmExchange,
         "binance_coin-m": binance_coinm.BinanceCoinmExchange,
