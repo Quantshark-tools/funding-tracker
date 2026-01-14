@@ -16,6 +16,7 @@ from funding_tracker.exchanges import (
     kucoin,
     lighter,
     okx,
+    pacifica,
 )
 from funding_tracker.exchanges.base import BaseExchange
 
@@ -52,6 +53,7 @@ def _build_registry() -> dict[str, BaseExchange]:
         "kucoin": kucoin.KucoinExchange,
         "lighter": lighter.LighterExchange,
         "okx": okx.OkxExchange,
+        "pacifica": pacifica.PacificaExchange,
     }
 
     registry = {}
