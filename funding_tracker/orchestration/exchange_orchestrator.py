@@ -73,22 +73,32 @@ class ExchangeOrchestrator:
         total_points = 0
 
         async def process_contract(contract: Contract) -> tuple[int, int]:
-            """Process contract and return (updated_flag, points_count)."""
+            """Process contract with timeout protection."""
             async with self._semaphore:
                 try:
                     if not contract.synced:
-                        points = await sync_contract(
-                            self._exchange_adapter,
-                            contract,
-                            self._uow_factory,
-                        )
+                        async with asyncio.timeout(600.0):  # 10 minutes for sync
+                            points = await sync_contract(
+                                self._exchange_adapter,
+                                contract,
+                                self._uow_factory,
+                            )
                     else:
-                        points = await update_contract(
-                            self._exchange_adapter,
-                            contract,
-                            self._uow_factory,
-                        )
+                        async with asyncio.timeout(60.0):  # 1 minute for update
+                            points = await update_contract(
+                                self._exchange_adapter,
+                                contract,
+                                self._uow_factory,
+                            )
                     return (1 if points > 0 else 0, points)
+                except TimeoutError:
+                    contract_id = f"{contract.asset.name}/{contract.quote_name}"
+                    timeout_duration = "10m" if not contract.synced else "1m"
+                    logger.warning(
+                        f"[{self._section_name}] {contract_id} timed out after {timeout_duration}"
+                        f" - operation: {'sync' if not contract.synced else 'update'}"
+                    )
+                    return (0, 0)
                 except Exception as e:
                     logger.error(
                         f"Failed to process contract {contract.asset.name}/{contract.quote_name} "
