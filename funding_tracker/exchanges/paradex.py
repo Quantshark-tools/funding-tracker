@@ -32,6 +32,7 @@ _FETCH_STEP = 6 hours = 4320 records (5000 limit - safety buffer).
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 
 from funding_tracker.exchanges.base import BaseExchange
@@ -40,6 +41,13 @@ from funding_tracker.infrastructure import http_client
 from funding_tracker.shared.models.contract import Contract
 
 logger = logging.getLogger(__name__)
+
+# Suppress debug logs by default; enable with DEBUG_LIVE_COLLECTION env var
+_DEBUG_LIVE_COLLECTION = os.getenv("DEBUG_LIVE_COLLECTION", "false").lower() not in (
+    "true",
+    "1",
+    "yes",
+)
 
 
 class ParadexExchange(BaseExchange):
@@ -354,11 +362,12 @@ class ParadexExchange(BaseExchange):
         # Divide by 8 for hourly rate
         hourly_rate = raw_rate / 8
 
-        logger.debug(
-            f"Fetched live rate for {self.EXCHANGE_ID}/{symbol}: {hourly_rate:.8f} "
-            f"(cached, hour bucket now has "
-            f"{len(self._live_cache[contract_id][hour_start_ms])} records)"
-        )
+        if _DEBUG_LIVE_COLLECTION:
+            logger.debug(
+                f"Fetched live rate for {self.EXCHANGE_ID}/{symbol}: {hourly_rate:.8f} "
+                f"(cached, hour bucket now has "
+                f"{len(self._live_cache[contract_id][hour_start_ms])} records)"
+            )
 
         return FundingPoint(rate=hourly_rate, timestamp=now)
 
