@@ -139,7 +139,9 @@ async def update_contract(
         points = await exchange_adapter.fetch_history_after(contract, after_timestamp)
 
         if not points:
-            exchange_adapter.logger.debug("No new funding points returned")
+            exchange_adapter.logger.debug(
+                f"No new funding points for {contract.asset.name}/{contract.quote_name}"
+            )
             return 0
 
         funding_records = [

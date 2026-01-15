@@ -1,7 +1,10 @@
 """Live funding rate collector."""
 
 import logging
+import os
 from typing import TYPE_CHECKING
+
+from dotenv import load_dotenv
 
 from funding_tracker.shared.models.live_funding_point import LiveFundingPoint
 from funding_tracker.unit_of_work import UOWFactoryType
@@ -9,7 +12,13 @@ from funding_tracker.unit_of_work import UOWFactoryType
 if TYPE_CHECKING:
     from funding_tracker.exchanges.base import BaseExchange
 
+load_dotenv()
+
 logger = logging.getLogger(__name__)
+
+# Suppress debug logs by default; enable with DEBUG_LIVE_COLLECTION env var
+if os.getenv("DEBUG_LIVE_COLLECTION", "false").lower() not in ("true", "1", "yes"):
+    logger.setLevel(logging.WARNING)
 
 
 async def collect_live(

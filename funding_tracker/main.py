@@ -10,10 +10,13 @@ import asyncio
 import logging
 import sys
 
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from funding_tracker.bootstrap import bootstrap
+
+load_dotenv()
 
 # Configure root logger
 logging.basicConfig(

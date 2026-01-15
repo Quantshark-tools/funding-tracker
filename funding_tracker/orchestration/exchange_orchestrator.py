@@ -97,13 +97,21 @@ class ExchangeOrchestrator:
                     )
                     return (0, 0)
 
+        logger.debug(f"[{self._section_name}] Starting gather for {len(contracts)} contracts")
         tasks = [process_contract(contract) for contract in contracts]
         results = await asyncio.gather(*tasks)
+
+        logger.debug(f"[{self._section_name}] Gather complete, aggregating results...")
 
         # Aggregate statistics
         for was_updated, points in results:
             updated_count += was_updated
             total_points += points
+
+        logger.debug(
+            f"[{self._section_name}] Aggregation complete: "
+            f"{updated_count}/{len(contracts)} updated"
+        )
 
         duration = datetime.now() - start_time
         logger.info(
