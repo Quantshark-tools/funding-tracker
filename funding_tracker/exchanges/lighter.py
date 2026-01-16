@@ -43,6 +43,8 @@ class LighterExchange(BaseExchange):
         asset_to_id = {}
 
         for market in response.get("order_books", []):
+            if market.get("market_type") != "perp":
+                continue
             asset_name = market["symbol"]
             asset_to_id[asset_name] = market["market_id"]
             contracts.append(
