@@ -4,7 +4,7 @@ from funding_tracker.shared.models.base import BaseFundingPoint
 
 
 class LiveFundingPoint(BaseFundingPoint, table=True):
-    __tablename__: str = "unsettled_funding_rate_record"
+    __tablename__: str = "live_funding_point"
 
     __table_args__ = (
         PrimaryKeyConstraint("contract_id", "timestamp"),
