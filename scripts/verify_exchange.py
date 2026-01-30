@@ -17,16 +17,16 @@ import sys
 from datetime import datetime
 from typing import TYPE_CHECKING, cast
 
+from funding_tracker.coordinators.symbol_assembler import assemble_symbol
 from rich.console import Console
 from rich.table import Table
 
-from funding_tracker.coordinators.symbol_assembler import assemble_symbol
 from funding_tracker.exchanges import EXCHANGES
 
 if TYPE_CHECKING:
-    from funding_tracker.shared.models import Asset, Contract, Quote
+    from quantshark_shared.models import Asset, Contract, Quote
 else:
-    from funding_tracker.shared.models import Asset, Contract, Quote
+    from quantshark_shared.models import Asset, Contract, Quote
 
 console = Console()
 

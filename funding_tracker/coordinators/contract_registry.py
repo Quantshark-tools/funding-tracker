@@ -3,12 +3,13 @@
 import logging
 from typing import TYPE_CHECKING
 
+from quantshark_shared.models.asset import Asset
+from quantshark_shared.models.contract import Contract
+from quantshark_shared.models.quote import Quote
+from quantshark_shared.models.section import Section
+
 from funding_tracker.db import UOWFactoryType
 from funding_tracker.materialized_view_refresher import MaterializedViewRefresher
-from funding_tracker.shared.models.asset import Asset
-from funding_tracker.shared.models.contract import Contract
-from funding_tracker.shared.models.quote import Quote
-from funding_tracker.shared.models.section import Section
 
 if TYPE_CHECKING:
     from funding_tracker.exchanges.base import BaseExchange

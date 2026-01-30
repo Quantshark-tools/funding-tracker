@@ -6,9 +6,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from httpx import HTTPError
+from quantshark_shared.models.contract import Contract
 
 from funding_tracker.exchanges.dto import FundingPoint
-from funding_tracker.shared.models.contract import Contract
 
 if TYPE_CHECKING:
     from funding_tracker.exchanges.base import BaseExchange

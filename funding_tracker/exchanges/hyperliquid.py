@@ -7,10 +7,11 @@ _FETCH_STEP = 498 hours (500 - 2 safety buffer).
 import logging
 from datetime import datetime
 
+from quantshark_shared.models.contract import Contract
+
 from funding_tracker.exchanges.base import BaseExchange
 from funding_tracker.exchanges.dto import ContractInfo, FundingPoint
 from funding_tracker.infrastructure import http_client
-from funding_tracker.shared.models.contract import Contract
 
 logger = logging.getLogger(__name__)
 

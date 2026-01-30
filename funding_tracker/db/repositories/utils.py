@@ -4,12 +4,11 @@ from collections.abc import Iterable, Sequence
 from typing import Any, Literal, TypeVar, cast
 from uuid import UUID
 
+from quantshark_shared.models.base import NameModel, UUIDModel
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import asc, desc, select
 from sqlmodel import SQLModel
-
-from funding_tracker.shared.models.base import NameModel, UUIDModel
 
 M = TypeVar("M", bound=SQLModel)
 

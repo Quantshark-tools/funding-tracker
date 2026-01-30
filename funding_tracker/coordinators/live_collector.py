@@ -3,8 +3,9 @@
 import logging
 from typing import TYPE_CHECKING
 
+from quantshark_shared.models.live_funding_point import LiveFundingPoint
+
 from funding_tracker.db import UOWFactoryType
-from funding_tracker.shared.models.live_funding_point import LiveFundingPoint
 
 if TYPE_CHECKING:
     from funding_tracker.exchanges.base import BaseExchange

@@ -5,11 +5,7 @@ from logging.config import fileConfig
 import alembic_postgresql_enum
 from alembic.script import ScriptDirectory
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config, pool
-from sqlmodel import SQLModel
-
-from alembic import context
-from funding_tracker.shared.models import (  # noqa: F401
+from quantshark_shared.models import (  # noqa: F401
     Asset,
     Contract,
     HistoricalFundingPoint,
@@ -17,6 +13,10 @@ from funding_tracker.shared.models import (  # noqa: F401
     Quote,
     Section,
 )
+from sqlalchemy import engine_from_config, pool
+from sqlmodel import SQLModel
+
+from alembic import context
 
 alembic_postgresql_enum.set_configuration(
     alembic_postgresql_enum.Config(force_dialect_support=True)

@@ -1,9 +1,9 @@
 from uuid import UUID
 
+from quantshark_shared.models.historical_funding_point import HistoricalFundingPoint
 from sqlalchemy.sql.expression import asc, desc, select
 
 from funding_tracker.db.repositories.base import Repository
-from funding_tracker.shared.models.historical_funding_point import HistoricalFundingPoint
 
 
 class HistoricalFundingPointRepository(Repository[HistoricalFundingPoint]):

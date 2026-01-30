@@ -19,10 +19,11 @@ dependencies = [
     "greenlet>=3.2.4",
     "alembic-postgresql-enum>=1.8.0",
     # TimescaleDB support
-    "sqlalchemy-timescaledb @ git+https://github.com/NikitaPirate/sqlalchemy-timescaledb.git",
+    "sqlalchemy-timescaledb",
     # Utilities
     "python-dotenv>=1.2.1",
     "rich>=14.2.0",
+    "quantshark-shared",
 ]
 
 [project.scripts]
@@ -41,6 +42,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.uv.sources]
+quantshark-shared = { git = "https://github.com/Quantshark-tools/shared.git" }
+sqlalchemy-timescaledb = { git = "https://github.com/NikitaPirate/sqlalchemy-timescaledb.git" }
 
 [dependency-groups]
 dev = [

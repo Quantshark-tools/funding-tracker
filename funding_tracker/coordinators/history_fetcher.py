@@ -3,9 +3,10 @@
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
+from quantshark_shared.models.contract import Contract
+from quantshark_shared.models.historical_funding_point import HistoricalFundingPoint
+
 from funding_tracker.db import UOWFactoryType
-from funding_tracker.shared.models.contract import Contract
-from funding_tracker.shared.models.historical_funding_point import HistoricalFundingPoint
 
 if TYPE_CHECKING:
     from funding_tracker.exchanges.base import BaseExchange

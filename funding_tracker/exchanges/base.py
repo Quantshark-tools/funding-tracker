@@ -4,8 +4,9 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from quantshark_shared.models.contract import Contract
+
 from funding_tracker.exchanges.dto import ContractInfo, FundingPoint
-from funding_tracker.shared.models.contract import Contract
 
 
 class BaseExchange(ABC):
