@@ -25,13 +25,20 @@ class HyperliquidExchange(BaseExchange):
     # 500 records max, 1-hour interval -> 498 hours (500 - 2 safety buffer)
     _FETCH_STEP = 498
 
+    # Optional DEX parameter for sub-dex variants (e.g., "xyz")
+    _DEX: str | None = None
+
     def _format_symbol(self, contract: Contract) -> str:
         return contract.asset.name
 
     async def get_contracts(self) -> list[ContractInfo]:
+        json_payload = {"type": "meta"}
+        if self._DEX:
+            json_payload["dex"] = self._DEX
+
         response = await http_client.post(
             self.API_ENDPOINT,
-            json={"type": "meta"},
+            json=json_payload,
             headers={"Content-Type": "application/json"},
         )
 
@@ -77,9 +84,13 @@ class HyperliquidExchange(BaseExchange):
         return points
 
     async def _fetch_all_rates(self) -> dict[str, FundingPoint]:
+        json_payload = {"type": "metaAndAssetCtxs"}
+        if self._DEX:
+            json_payload["dex"] = self._DEX
+
         response = await http_client.post(
             self.API_ENDPOINT,
-            json={"type": "metaAndAssetCtxs"},
+            json=json_payload,
             headers={"Content-Type": "application/json"},
         )
 
@@ -87,7 +98,13 @@ class HyperliquidExchange(BaseExchange):
         meta_data = response[0]["universe"]
         asset_contexts = response[1]
 
-        asset_names = {i: asset["name"] for i, asset in enumerate(meta_data)}
+        # Handle both prefixed symbols (xyz:GOLD) and non-prefixed (BTC)
+        asset_names = {}
+        for i, asset in enumerate(meta_data):
+            full_name = asset["name"]
+            # Extract base name after colon if present
+            base_name = full_name.split(":")[-1]
+            asset_names[i] = base_name
 
         now = datetime.now()
         rates = {}
