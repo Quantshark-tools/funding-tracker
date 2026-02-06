@@ -18,6 +18,10 @@ docker-compose up
 
 ## Local Development
 
+```bash
+cp .env.example .env
+```
+
 ### Run with specific exchanges
 
 ```bash
@@ -63,6 +67,16 @@ See [deploy/README.md](deploy/README.md) for Docker deployment instructions.
 ## Adding New Exchanges
 
 See `funding_tracker/exchanges/_template.py` for implementation guide.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Exchange adapter validation is based on real API verification:
+
+```bash
+uv run verify <exchange_id>
+```
 
 ## Architecture
 
