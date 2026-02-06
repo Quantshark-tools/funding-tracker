@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import time
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -31,9 +32,19 @@ def _force_utc_timezone() -> None:
         time.tzset()
 
 
-async def run_scheduler(db_connection: str, exchanges: list[str] | None) -> None:
+async def run_scheduler(
+    db_connection: str,
+    db_engine_kwargs: dict[str, Any],
+    db_session_kwargs: dict[str, Any],
+    exchanges: list[str] | None,
+) -> None:
     """Bootstrap and run scheduler forever."""
-    scheduler = await bootstrap(db_connection=db_connection, exchanges=exchanges)
+    scheduler = await bootstrap(
+        db_connection=db_connection,
+        db_engine_kwargs=db_engine_kwargs,
+        db_session_kwargs=db_session_kwargs,
+        exchanges=exchanges,
+    )
     scheduler.start()
     logger.info("Scheduler started, waiting for jobs...")
     await asyncio.Event().wait()
@@ -74,7 +85,14 @@ def main() -> None:
         logger.info("Starting funding tracker with all exchanges")
 
     try:
-        asyncio.run(run_scheduler(config.db_connection, config.exchanges))
+        asyncio.run(
+            run_scheduler(
+                config.db_connection,
+                config.db_engine_kwargs,
+                config.db_session_kwargs,
+                config.exchanges,
+            )
+        )
     except KeyboardInterrupt:
         logger.info("Application stopped by user")
     except Exception as exc:

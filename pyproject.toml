@@ -67,7 +67,6 @@ unfixable = []
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"alembic/**/*.py" = ["ANN"]
 "scripts/**/*.py" = ["ANN"]
 
 [tool.ruff.format]
@@ -79,7 +78,6 @@ include = ["funding_tracker"]
 exclude = [
     "**/__pycache__",
     ".venv",
-    "alembic",
     "funding_tracker/exchanges/_template.py",
 ]
 ignore = [

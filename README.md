@@ -10,7 +10,9 @@ docker-compose up
 
 ## Environment Variables
 
-- `DB_CONNECTION`: PostgreSQL connection string (required)
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DBNAME`: PostgreSQL connection settings
+- `FT_ENGINE_KWARGS`: JSON object with funding-tracker engine kwargs (optional)
+- `FT_SESSION_KWARGS`: JSON object with funding-tracker session kwargs (optional)
 - `EXCHANGES`: Comma-separated list of exchanges to run (default: all)
 - `DEBUG_EXCHANGES`: Comma-separated list for DEBUG logging (independent of execution)
 

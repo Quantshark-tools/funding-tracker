@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from funding_tracker.settings import Settings
 
@@ -16,6 +17,8 @@ class RuntimeConfig:
     """Resolved startup configuration after CLI/ENV merge."""
 
     db_connection: str
+    db_engine_kwargs: dict[str, Any]
+    db_session_kwargs: dict[str, Any]
     exchanges: list[str] | None
     debug_exchanges: str | None
     debug_exchanges_live: str | None
@@ -60,6 +63,8 @@ def build_runtime_config(
 
     return RuntimeConfig(
         db_connection=settings.db_connection,
+        db_engine_kwargs=_resolve_engine_kwargs(settings.db.engine_kwargs),
+        db_session_kwargs=_resolve_session_kwargs(settings.db.session_kwargs),
         exchanges=exchanges,
         debug_exchanges=debug_exchanges_arg,
         debug_exchanges_live=debug_exchanges_live_arg,
@@ -91,6 +96,23 @@ def _parse_exchanges_spec(exchanges_spec: str | None, all_exchanges: set[str]) -
         return valid
 
     return None
+
+
+def _resolve_engine_kwargs(service_engine_kwargs: dict[str, Any] | None) -> dict[str, Any]:
+    defaults = {
+        "echo": False,
+        "pool_pre_ping": True,
+        "pool_size": 30,
+        "max_overflow": 200,
+    }
+    return {**defaults, **(service_engine_kwargs or {})}
+
+
+def _resolve_session_kwargs(service_session_kwargs: dict[str, Any] | None) -> dict[str, Any]:
+    defaults = {
+        "expire_on_commit": False,
+    }
+    return {**defaults, **(service_session_kwargs or {})}
 
 
 def _filter_exchanges_by_instance(

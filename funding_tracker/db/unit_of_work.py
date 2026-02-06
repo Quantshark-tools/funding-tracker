@@ -29,9 +29,7 @@ def setup_db_session(
     engine_kwargs: dict[str, Any] | None = None,
 ) -> async_sessionmaker[AsyncSession]:
     """Create a SQLAlchemy async session factory."""
-    session_kwargs = session_kwargs or {}
-    session_kwargs["expire_on_commit"] = False
-
+    session_kwargs = {"expire_on_commit": False, **(session_kwargs or {})}
     engine_kwargs = engine_kwargs or {}
 
     engine = create_async_engine(db_connection, **engine_kwargs)

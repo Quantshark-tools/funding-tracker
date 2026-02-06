@@ -15,8 +15,9 @@ cp .env.example .env
 
 ### Environment Variables
 
-- `DB_CONNECTION`: PostgreSQL connection string (required)
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DBNAME`: database settings for `db-migrate` (should match `DB_CONNECTION`)
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DBNAME`: database settings for both `funding-tracker` and `db-migrate`
+- `FT_ENGINE_KWARGS`: JSON object with `funding-tracker` engine kwargs (optional)
+- `FT_SESSION_KWARGS`: JSON object with `funding-tracker` session kwargs (optional)
 - `EXCHANGES`: Comma-separated list of exchanges to run (default: all, empty = run all)
 - `DEBUG_EXCHANGES`: Comma-separated list for DEBUG logging (independent of execution)
 
@@ -115,7 +116,7 @@ docker-compose up -d timescaledb
 docker-compose up db-migrate
 
 # Run application locally (connects to Docker DB)
-export DB_CONNECTION="postgresql+psycopg://postgres:postgres@localhost:5432/funding_tracker"
+export DB_HOST=localhost DB_PORT=5432 DB_USER=postgres DB_PASSWORD=postgres DB_DBNAME=funding_tracker FT_ENGINE_KWARGS='{"pool_size":30,"max_overflow":200,"pool_pre_ping":true}' FT_SESSION_KWARGS='{"expire_on_commit":false}'
 EXCHANGES=hyperliquid funding-tracker
 ```
 

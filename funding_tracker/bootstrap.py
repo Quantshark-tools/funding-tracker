@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.combining import OrTrigger
@@ -20,13 +21,19 @@ logger = logging.getLogger(__name__)
 
 async def bootstrap(
     db_connection: str,
+    db_engine_kwargs: dict[str, Any],
+    db_session_kwargs: dict[str, Any],
     exchanges: list[str] | None = None,
     concurrency_limit: int = 10,
     mv_refresher_debounce: int = 10,
 ) -> AsyncIOScheduler:
     """Build and return configured scheduler."""
     resolved_exchanges = _resolve_exchanges(exchanges)
-    uow_factory = _create_uow_factory(db_connection)
+    uow_factory = _create_uow_factory(
+        db_connection=db_connection,
+        db_engine_kwargs=db_engine_kwargs,
+        db_session_kwargs=db_session_kwargs,
+    )
     mv_refresher = MaterializedViewRefresher(
         uow_factory=uow_factory,
         debounce_seconds=mv_refresher_debounce,
@@ -77,11 +84,16 @@ def _resolve_exchanges(exchanges: list[str] | None) -> list[str]:
     return valid
 
 
-def _create_uow_factory(db_connection: str) -> UOWFactoryType:
+def _create_uow_factory(
+    db_connection: str,
+    db_engine_kwargs: dict[str, Any],
+    db_session_kwargs: dict[str, Any],
+) -> UOWFactoryType:
     """Create shared database unit-of-work factory."""
     return create_uow_factory(
         db_connection,
-        engine_kwargs={"pool_size": 30, "max_overflow": 200},
+        session_kwargs=db_session_kwargs,
+        engine_kwargs=db_engine_kwargs,
     )
 
 
