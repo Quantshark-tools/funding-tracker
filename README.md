@@ -48,10 +48,10 @@ DEBUG_EXCHANGES=hyperliquid,bybit funding-tracker
 ### Verify exchange adapter
 
 ```bash
-python scripts/verify_exchange.py <exchange_id>
+uv run verify <exchange_id>
 
 # Example
-python scripts/verify_exchange.py hyperliquid
+uv run verify hyperliquid
 ```
 
 ## Docker Deployment
