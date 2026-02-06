@@ -16,6 +16,7 @@ cp .env.example .env
 ### Environment Variables
 
 - `DB_CONNECTION`: PostgreSQL connection string (required)
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DBNAME`: database settings for `db-migrate` (should match `DB_CONNECTION`)
 - `EXCHANGES`: Comma-separated list of exchanges to run (default: all, empty = run all)
 - `DEBUG_EXCHANGES`: Comma-separated list for DEBUG logging (independent of execution)
 
@@ -41,7 +42,7 @@ docker-compose up
 INSTANCE_COUNT=5 docker-compose up
 
 # Check supervisord status
-docker exec funding-tracker supervisorctl status
+docker exec funding-tracker-app supervisorctl status
 ```
 
 ## Running
@@ -51,6 +52,11 @@ docker exec funding-tracker supervisorctl status
 ```bash
 docker-compose up
 ```
+
+This starts:
+- `timescaledb`
+- `db-migrate` (runs shared migrations and exits)
+- `funding-tracker` (starts only after successful migrations)
 
 ### Start with specific exchanges
 
@@ -85,7 +91,16 @@ EXCHANGES=hyperliquid DEBUG_EXCHANGES=hyperliquid,bybit docker-compose up
 
 ### Connect to local database
 
-The `docker-compose.override.yaml` file exposes the database port for local development:
+Create `docker-compose.override.yaml` to expose PostgreSQL:
+
+```yaml
+services:
+  timescaledb:
+    ports:
+      - "5432:5432"
+```
+
+Then connect:
 
 ```bash
 # Database accessible at localhost:5432
@@ -95,8 +110,9 @@ psql -h localhost -p 5432 -U postgres -d funding_tracker
 ### Run application locally with Docker database
 
 ```bash
-# Start only database
-docker-compose up timescaledb
+# Start database and run migrations
+docker-compose up -d timescaledb
+docker-compose up db-migrate
 
 # Run application locally (connects to Docker DB)
 export DB_CONNECTION="postgresql+psycopg://postgres:postgres@localhost:5432/funding_tracker"
@@ -120,6 +136,27 @@ Then run normally:
 docker-compose up
 ```
 
+### Use local `shared` for `db-migrate`
+
+By default, `db-migrate` uses remote context:
+`https://github.com/Quantshark-tools/shared.git`.
+
+To use local checkout (faster iteration), override build context:
+
+```yaml
+services:
+  db-migrate:
+    build:
+      context: /path/to/quantshark/shared
+      dockerfile: db-migrate/Dockerfile
+```
+
+Then rebuild:
+
+```bash
+docker-compose up --build
+```
+
 ## Management
 
 ### View logs
@@ -131,6 +168,7 @@ docker-compose logs -f
 # Specific service
 docker-compose logs -f funding-tracker
 docker-compose logs -f timescaledb
+docker-compose logs -f db-migrate
 ```
 
 ### Stop services
@@ -155,7 +193,7 @@ docker-compose up --build
 
 ### Database connection errors
 
-Ensure database is healthy before application starts:
+Ensure both database and migrations are healthy/successful:
 
 ```bash
 docker-compose ps
@@ -166,6 +204,7 @@ docker-compose ps
 Check logs:
 
 ```bash
+docker-compose logs db-migrate
 docker-compose logs funding-tracker
 ```
 

@@ -20,24 +20,39 @@ services:
       timeout: 5s
       retries: 5
 
+  db-migrate:
+    build:
+      context: https://github.com/Quantshark-tools/shared.git
+      dockerfile: db-migrate/Dockerfile
+    container_name: funding-tracker-db-migrate
+    restart: on-failure
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-timescaledb}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_DBNAME: ${DB_DBNAME:-funding_tracker}
+
   funding-tracker:
     build:
       context: ..
       dockerfile: Dockerfile
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
     container_name: funding-tracker-app
     restart: unless-stopped
     depends_on:
-      timescaledb:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     environment:
       EXCHANGES: ${EXCHANGES:-}
       DEBUG_EXCHANGES: ${DEBUG_EXCHANGES:-}
       INSTANCE_COUNT: ${INSTANCE_COUNT:-3}
     env_file:
       - .env
-    volumes:
-      - ./entrypoint.sh:/entrypoint.sh:ro
 
 volumes:
   timescaledb_data:
