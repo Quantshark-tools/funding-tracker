@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     @cached_property
     def db(self) -> FTDBSettings:
-        return FTDBSettings()
+        return FTDBSettings()  # pyright: ignore[reportCallIssue]
 
     @property
     def db_connection(self) -> str:
